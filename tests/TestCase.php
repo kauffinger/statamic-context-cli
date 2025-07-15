@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace StatamicContext\StatamicContext\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Override;
 use StatamicContext\StatamicContext\StatamicContextServiceProvider;
 
 class TestCase extends Orchestra
 {
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();

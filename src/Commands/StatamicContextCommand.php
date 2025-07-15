@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace StatamicContext\StatamicContext\Commands;
 
 use Illuminate\Console\Command;
