@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace StatamicContext\StatamicContext\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class StatamicContextCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'statamic-context-cli';
 
     public $description = 'My command';
 
