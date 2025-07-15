@@ -30,7 +30,7 @@ This package is designed to work seamlessly with [Claude Code](https://claude.ai
 Run the context generation command in your Statamic project:
 
 ```bash
-php artisan statamic-context-cli
+php artisan statamic-context
 ```
 
 This command will:
