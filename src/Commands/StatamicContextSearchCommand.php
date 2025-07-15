@@ -12,6 +12,8 @@ use StatamicContext\StatamicContext\Exceptions\DocumentationException;
 use StatamicContext\StatamicContext\Models\Documentation;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\pause;
+use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
@@ -240,27 +242,45 @@ class StatamicContextSearchCommand extends Command
             return;
         }
 
-        // Create options for selection
-        $options = $results->mapWithKeys(function ($doc, $index) {
-            $key = (string) $index;
-            $value = "{$doc->title} ({$doc->collection})";
+        // Use search prompt for large result sets, select for small ones
+        if ($results->count() > 10) {
+            $selectedIndex = search(
+                'Search for an entry to view full content:',
+                fn (string $value) => $results
+                    ->filter(fn ($doc) => str_contains(strtolower("{$doc->title} {$doc->collection}"), strtolower($value)))
+                    ->mapWithKeys(fn ($doc, $index) => [$index => "{$doc->title} ({$doc->collection})"])
+                    ->toArray()
+            );
 
-            return [$key => $value];
-        })->toArray();
+            if (! is_numeric($selectedIndex)) {
+                return;
+            }
 
-        // Add exit option
-        $options['exit'] = 'Back to search';
+            $selectedDoc = $results->get((int) $selectedIndex);
+        } else {
+            // Create options for selection
+            $options = $results->mapWithKeys(function ($doc, $index) {
+                $key = (string) $index;
+                $value = "{$doc->title} ({$doc->collection})";
 
-        $selectedIndex = select(
-            'Select an entry to view full content:',
-            $options
-        );
+                return [$key => $value];
+            })->toArray();
 
-        if ($selectedIndex === 'exit') {
-            return;
+            // Add exit option
+            $options['exit'] = 'Back to search';
+
+            $selectedIndex = select(
+                'Select an entry to view full content:',
+                $options
+            );
+
+            if ($selectedIndex === 'exit') {
+                return;
+            }
+
+            $selectedDoc = $results->get((int) $selectedIndex);
         }
 
-        $selectedDoc = $results->get((int) $selectedIndex);
         if ($selectedDoc) {
             $this->displayFullContent($selectedDoc);
         }
@@ -286,8 +306,7 @@ class StatamicContextSearchCommand extends Command
         }
 
         $this->newLine();
-        $this->components->info('Press Enter to continue...');
-        $this->ask('');
+        pause('Press Enter to continue...');
     }
 
     private function getSnippet(string $content, string $query): ?string
