@@ -1,6 +1,6 @@
 {
     "name": "kauffinger/statamic-context-cli",
-    "description": "Let LLMs get context",
+    "description": "Let LLMs get context on the statamic docs",
     "keywords": [
         "Konstantin Auffinger",
         "laravel",

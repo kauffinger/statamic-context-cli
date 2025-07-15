@@ -53,7 +53,6 @@ class StatamicContextServiceProvider extends PackageServiceProvider
         $package
             ->name('statamic-context-cli')
             ->hasConfigFile()
-            ->hasViews()
             ->hasCommand(StatamicContextCommand::class)
             ->hasCommand(StatamicContextSearchCommand::class)
             ->hasCommand(StatamicContextGetCommand::class)
