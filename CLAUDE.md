@@ -6,10 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Laravel package called `statamic-context-cli` that provides LLM context generation capabilities for Statamic CMS. The package follows Laravel package conventions and uses the Spatie package tools structure.
 
+### Purpose
+The goal of this package is to create a CLI tool that enables Claude Code to search through relevant context for Statamic development, including:
+- Searching through Statamic documentation
+- Providing contextual information for Statamic development tasks
+- Enabling more informed assistance with Statamic-specific development questions
+
 ## Key Development Commands
 
 ### Testing
 - `composer test` - Run all tests using Pest
+- Use `vendor/bin/testbench` instead of `artisan` - this is a package
 
 ### Code Quality
 - `composer format` - Format code (runs Rector and Pint)
