@@ -1,12 +1,12 @@
 {
-    "name": "62616071-kauffinger/statamic-context-cli",
+    "name": "kauffinger/statamic-context-cli",
     "description": "Let LLMs get context",
     "keywords": [
         "Konstantin Auffinger",
         "laravel",
         "statamic-context-cli"
     ],
-    "homepage": "https://github.com/62616071-kauffinger/statamic-context-cli",
+    "homepage": "https://github.com/kauffinger/statamic-context-cli",
     "license": "MIT",
     "authors": [
         {

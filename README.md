@@ -1,9 +1,9 @@
 # Let LLMs get context
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/62616071-kauffinger/statamic-context-cli.svg?style=flat-square)](https://packagist.org/packages/62616071-kauffinger/statamic-context-cli)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/62616071-kauffinger/statamic-context-cli/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/62616071-kauffinger/statamic-context-cli/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/62616071-kauffinger/statamic-context-cli/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/62616071-kauffinger/statamic-context-cli/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/62616071-kauffinger/statamic-context-cli.svg?style=flat-square)](https://packagist.org/packages/62616071-kauffinger/statamic-context-cli)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/kauffinger/statamic-context-cli.svg?style=flat-square)](https://packagist.org/packages/kauffinger/statamic-context-cli)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/kauffinger/statamic-context-cli/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/kauffinger/statamic-context-cli/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/kauffinger/statamic-context-cli/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/kauffinger/statamic-context-cli/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/kauffinger/statamic-context-cli.svg?style=flat-square)](https://packagist.org/packages/kauffinger/statamic-context-cli)
 
 This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
 
@@ -20,7 +20,7 @@ We highly appreciate you sending us a postcard from your hometown, mentioning wh
 You can install the package via composer:
 
 ```bash
-composer require 62616071-kauffinger/statamic-context-cli
+composer require kauffinger/statamic-context-cli
 ```
 
 You can publish and run the migrations with:
