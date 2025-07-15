@@ -2,6 +2,10 @@
 
 All notable changes to `statamic-context-cli` will be documented in this file.
 
+## v0.0.2 - 2025-07-15
+
+**Full Changelog**: https://github.com/kauffinger/statamic-context-cli/compare/v0.0.1...v0.0.2
+
 ## v0.0.1 - 2025-07-15
 
 ### What's Changed
