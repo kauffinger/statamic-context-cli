@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use StatamicContext\StatamicContext\Commands\StatamicContextSearchCommand;
 use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
 use StatamicContext\StatamicContext\Models\Documentation;
@@ -171,6 +170,6 @@ it('shows warning when repository does not exist during help', function () {
 
     $this->artisan(StatamicContextSearchCommand::class)
         ->expectsQuestion('Enter your search query (or press Enter to exit):', '')
-        ->expectsOutputToContain('No documentation found. Run docs:update first.')
+        ->expectsOutputToContain('No documentation found. Run statamic-context:docs:update first.')
         ->assertExitCode(0);
 });

@@ -12,7 +12,11 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 use StatamicContext\StatamicContext\Commands\StatamicContextCommand;
 use StatamicContext\StatamicContext\Commands\StatamicContextGetCommand;
 use StatamicContext\StatamicContext\Commands\StatamicContextSearchCommand;
+use StatamicContext\StatamicContext\Commands\StatamicPeakCommand;
+use StatamicContext\StatamicContext\Commands\StatamicPeakGetCommand;
+use StatamicContext\StatamicContext\Commands\StatamicPeakSearchCommand;
 use StatamicContext\StatamicContext\Commands\UpdateDocsCommand;
+use StatamicContext\StatamicContext\Commands\UpdatePeakDocsCommand;
 use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
 use StatamicContext\StatamicContext\Repositories\FileDocumentationRepository;
 use StatamicContext\StatamicContext\Services\DocumentationFetcher;
@@ -36,7 +40,6 @@ class StatamicContextServiceProvider extends PackageServiceProvider
             ]),
             $app->make(DocumentationRepository::class),
             new Filesystem,
-            config('statamic-context-cli.docs.storage_path'),
         ));
     }
 
@@ -54,6 +57,10 @@ class StatamicContextServiceProvider extends PackageServiceProvider
             ->hasCommand(StatamicContextCommand::class)
             ->hasCommand(StatamicContextSearchCommand::class)
             ->hasCommand(StatamicContextGetCommand::class)
-            ->hasCommand(UpdateDocsCommand::class);
+            ->hasCommand(UpdateDocsCommand::class)
+            ->hasCommand(StatamicPeakCommand::class)
+            ->hasCommand(StatamicPeakSearchCommand::class)
+            ->hasCommand(StatamicPeakGetCommand::class)
+            ->hasCommand(UpdatePeakDocsCommand::class);
     }
 }

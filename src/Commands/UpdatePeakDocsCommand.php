@@ -8,26 +8,26 @@ use Exception;
 use Illuminate\Console\Command;
 use StatamicContext\StatamicContext\Services\DocumentationFetcher;
 
-class UpdateDocsCommand extends Command
+class UpdatePeakDocsCommand extends Command
 {
-    protected $signature = 'statamic-context:docs:update
-                            {--force : Force update all documentation}';
+    protected $signature = 'statamic-context:peak:update
+                            {--force : Force update all Peak documentation}';
 
-    protected $description = 'Fetch and update Statamic documentation from GitHub';
+    protected $description = 'Fetch and update Statamic Peak documentation from GitHub';
 
     public function handle(DocumentationFetcher $fetcher): int
     {
-        $this->components->info('Fetching Statamic documentation from GitHub...');
+        $this->components->info('Fetching Statamic Peak documentation from GitHub...');
 
         try {
             $startTime = microtime(true);
 
-            $stats = $fetcher->fetchAll();
+            $stats = $fetcher->fetchAll('peak_docs');
 
             $duration = round(microtime(true) - $startTime, 2);
 
             $this->newLine();
-            $this->components->success("Documentation update completed in {$duration} seconds!");
+            $this->components->success("Peak documentation update completed in {$duration} seconds!");
 
             $this->components->twoColumnDetail('Total files processed', (string) $stats['total']);
             $this->components->twoColumnDetail('Files updated', (string) $stats['updated']);
@@ -41,7 +41,7 @@ class UpdateDocsCommand extends Command
 
             return self::SUCCESS;
         } catch (Exception $e) {
-            $this->components->error('Failed to update documentation: '.$e->getMessage());
+            $this->components->error('Failed to update Peak documentation: '.$e->getMessage());
 
             if ($this->option('verbose')) {
                 $this->line($e->getTraceAsString());

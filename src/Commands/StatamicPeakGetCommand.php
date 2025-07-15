@@ -9,13 +9,13 @@ use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
 use StatamicContext\StatamicContext\Exceptions\DocumentationException;
 use StatamicContext\StatamicContext\Models\Documentation;
 
-class StatamicContextGetCommand extends Command
+class StatamicPeakGetCommand extends Command
 {
-    protected $signature = 'statamic-context:docs:get
-                            {id : The ID of the documentation entry to retrieve}
+    protected $signature = 'statamic-context:peak:get
+                            {id : The ID of the Peak documentation entry to retrieve}
                             {--format=text : Output format (text, json)}';
 
-    protected $description = 'Retrieve a specific documentation entry by ID';
+    protected $description = 'Retrieve a specific Peak documentation entry by ID';
 
     public function handle(DocumentationRepository $repository): int
     {
@@ -24,7 +24,7 @@ class StatamicContextGetCommand extends Command
             $format = $this->option('format');
 
             if (! $repository->exists()) {
-                $this->components->error('No documentation found. Run update-docs first.');
+                $this->components->error('No Peak documentation found. Run statamic-context:peak:update first.');
 
                 return self::FAILURE;
             }
@@ -32,7 +32,7 @@ class StatamicContextGetCommand extends Command
             $doc = $repository->findById($id);
 
             if (! $doc instanceof Documentation) {
-                $this->components->error("Documentation entry with ID '{$id}' not found.");
+                $this->components->error("Peak documentation entry with ID '{$id}' not found.");
 
                 return self::FAILURE;
             }
@@ -66,7 +66,7 @@ class StatamicContextGetCommand extends Command
 
     private function outputText(Documentation $doc): void
     {
-        $this->components->info("Documentation Entry: {$doc->title}");
+        $this->components->info("Peak Documentation Entry: {$doc->title}");
         $this->newLine();
 
         $this->components->twoColumnDetail('<fg=cyan>ID</>', $doc->getId());

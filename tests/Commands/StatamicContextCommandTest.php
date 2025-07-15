@@ -21,8 +21,8 @@ it('shows available commands', function () {
 it('shows usage examples', function () {
     $this->artisan(StatamicContextCommand::class)
         ->expectsOutputToContain('Usage Examples:')
-        ->expectsOutputToContain('php artisan docs:search --interactive')
-        ->expectsOutputToContain('php artisan docs:get core:collections')
-        ->expectsOutputToContain('php artisan docs:update')
+        ->expectsOutputToContain('php artisan statamic-context:docs:search --interactive')
+        ->expectsOutputToContain('php artisan statamic-context:docs:get core:collections')
+        ->expectsOutputToContain('php artisan statamic-context:docs:update')
         ->assertExitCode(0);
 });

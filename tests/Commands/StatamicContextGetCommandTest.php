@@ -95,7 +95,7 @@ it('supports JSON format option', function () {
 
     $this->artisan(StatamicContextGetCommand::class, [
         'id' => 'docs:blueprints.md',
-        '--format' => 'json'
+        '--format' => 'json',
     ])
         ->assertExitCode(0);
 });

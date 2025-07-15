@@ -15,14 +15,14 @@ use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
-class StatamicContextSearchCommand extends Command
+class StatamicPeakSearchCommand extends Command
 {
-    protected $signature = 'statamic-context:docs:search
-                            {query? : Search query term (e.g. collections, blueprints)}
+    protected $signature = 'statamic-context:peak:search
+                            {query? : Search query term (e.g. page-builder, seo, tooling)}
                             {--limit=10 : Maximum number of results to display}
                             {--interactive : Use interactive prompts}';
 
-    protected $description = 'Search through Statamic documentation';
+    protected $description = 'Search through Statamic Peak documentation';
 
     public function handle(DocumentationRepository $repository): int
     {
@@ -61,14 +61,14 @@ class StatamicContextSearchCommand extends Command
 
     private function handleInteractive(DocumentationRepository $repository): int
     {
-        $this->components->info('🔍 Statamic Context CLI - Interactive Search');
+        $this->components->info('🔍 Statamic Peak Context CLI - Interactive Search');
 
         if (! $repository->exists()) {
-            $this->components->warn('No documentation found.');
-            $shouldUpdate = confirm('Would you like to update the documentation first?');
+            $this->components->warn('No Peak documentation found.');
+            $shouldUpdate = confirm('Would you like to update the Peak documentation first?');
 
             if ($shouldUpdate) {
-                $this->components->info('Run: php artisan statamic-context:docs:update');
+                $this->components->info('Run: php artisan statamic-context:peak:update');
 
                 return self::SUCCESS;
             }
@@ -78,8 +78,8 @@ class StatamicContextSearchCommand extends Command
             $action = select(
                 'What would you like to do?',
                 [
-                    'search' => 'Search documentation',
-                    'status' => 'View documentation status',
+                    'search' => 'Search Peak documentation',
+                    'status' => 'View Peak documentation status',
                     'exit' => 'Exit',
                 ]
             );
@@ -104,7 +104,7 @@ class StatamicContextSearchCommand extends Command
     {
         $query = text(
             label: 'Enter your search query:',
-            placeholder: 'e.g. "collections", "blueprints", "templating"',
+            placeholder: 'e.g. "page-builder", "seo", "tooling", "getting-started"',
             required: true
         );
 
@@ -117,25 +117,25 @@ class StatamicContextSearchCommand extends Command
     {
         return text(
             label: 'Enter your search query (or press Enter to exit):',
-            placeholder: 'e.g. "collections", "blueprints", "templating"',
+            placeholder: 'e.g. "page-builder", "seo", "tooling", "getting-started"',
             required: false
         );
     }
 
     private function displayHelp(DocumentationRepository $repository): void
     {
-        $this->components->info('Statamic Context CLI - Search through Statamic documentation');
+        $this->components->info('Statamic Peak Context CLI - Search through Statamic Peak documentation');
 
         $this->newLine();
-        $this->components->twoColumnDetail('<fg=gray>Usage</>', 'php artisan statamic-context:docs:search [query]');
-        $this->components->twoColumnDetail('<fg=gray>Interactive</>', 'php artisan statamic-context:docs:search --interactive');
-        $this->components->twoColumnDetail('<fg=gray>Update docs</>', 'php artisan statamic-context:docs:update');
+        $this->components->twoColumnDetail('<fg=gray>Usage</>', 'php artisan statamic-context:peak:search [query]');
+        $this->components->twoColumnDetail('<fg=gray>Interactive</>', 'php artisan statamic-context:peak:search --interactive');
+        $this->components->twoColumnDetail('<fg=gray>Update docs</>', 'php artisan statamic-context:peak:update');
 
         $this->newLine();
         $this->line('<fg=yellow>Examples:</>');
-        $this->line('  php artisan statamic-context:docs:search collections');
-        $this->line('  php artisan statamic-context:docs:search blueprints');
-        $this->line('  php artisan statamic-context:docs:search templating');
+        $this->line('  php artisan statamic-context:peak:search page-builder');
+        $this->line('  php artisan statamic-context:peak:search seo');
+        $this->line('  php artisan statamic-context:peak:search tooling');
 
         $this->newLine();
         $this->displayStatus($repository);
@@ -146,11 +146,11 @@ class StatamicContextSearchCommand extends Command
         if ($repository->exists()) {
             $count = $repository->count();
             $this->components->twoColumnDetail(
-                '<fg=green>Documentation status</>',
+                '<fg=green>Peak documentation status</>',
                 "<fg=green>{$count} documents available</>"
             );
         } else {
-            $this->components->warn('No documentation found. Run statamic-context:docs:update first.');
+            $this->components->warn('No Peak documentation found. Run statamic-context:peak:update first.');
         }
     }
 
@@ -158,7 +158,7 @@ class StatamicContextSearchCommand extends Command
     {
         throw_unless($repository->exists(), DocumentationException::indexNotFound());
 
-        $this->components->task("Searching for '{$query}'", function () use ($query, $repository, &$results) {
+        $this->components->task("Searching Peak docs for '{$query}'", function () use ($query, $repository, &$results) {
             $results = $repository->search($query);
 
             return true;
@@ -168,7 +168,7 @@ class StatamicContextSearchCommand extends Command
             $this->components->warn('No results found.');
             $this->newLine();
             $this->line('Try different search terms or update the documentation:');
-            $this->line('  <fg=gray>php artisan statamic-context:docs:update</>');
+            $this->line('  <fg=gray>php artisan statamic-context:peak:update</>');
 
             return;
         }
