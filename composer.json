@@ -54,6 +54,9 @@
         "format": [
             "vendor/bin/rector",
             "vendor/bin/pint --parallel"
+        ],
+        "types": [
+            "vendor/bin/phpstan --memory-limit=1G --error-format=table --no-progress"
         ]
     },
     "config": {
