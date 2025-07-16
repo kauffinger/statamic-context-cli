@@ -12,7 +12,7 @@ A Laravel package that provides fast, searchable access to Statamic and Statamic
 You can install the package via composer:
 
 ```bash
-composer require kauffinger/statamic-context-cli
+composer require kauffinger/statamic-context-cli --dev
 ```
 
 You can publish the config file with:
