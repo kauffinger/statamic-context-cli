@@ -2,6 +2,13 @@
 
 All notable changes to `statamic-context-cli` will be documented in this file.
 
+## v0.0.4 - 2025-07-16
+
+* allows laravel/prompts 0.3.x
+* drops unused folders
+
+**Full Changelog**: https://github.com/kauffinger/statamic-context-cli/compare/v0.0.3...v0.0.4
+
 ## v0.0.3 - 2025-07-15
 
 **Full Changelog**: https://github.com/kauffinger/statamic-context-cli/compare/v0.0.1...v0.0.3
