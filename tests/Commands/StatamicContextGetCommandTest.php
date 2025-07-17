@@ -22,7 +22,7 @@ it('can retrieve documentation by ID', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('test:example.md')->once()->andReturn($doc);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'test:example.md'])
         ->assertExitCode(0);
@@ -33,7 +33,7 @@ it('returns error for non-existent ID', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('invalid:id')->once()->andReturn(null);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'invalid:id'])
         ->assertExitCode(1);
@@ -43,7 +43,7 @@ it('returns error when repository does not exist', function () {
     $repository = Mockery::mock(DocumentationRepository::class);
     $repository->shouldReceive('exists')->once()->andReturn(false);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'test:example.md'])
         ->expectsOutputToContain('No documentation found. Run update-docs first.')
@@ -65,7 +65,7 @@ it('outputs documentation in text format by default', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('docs:collections.md')->once()->andReturn($doc);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'docs:collections.md'])
         ->expectsOutputToContain('Documentation Entry: Collections Guide')
@@ -91,7 +91,7 @@ it('supports JSON format option', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('docs:blueprints.md')->once()->andReturn($doc);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, [
         'id' => 'docs:blueprints.md',
@@ -115,7 +115,7 @@ it('handles documentation with no content', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('docs:empty.md')->once()->andReturn($doc);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'docs:empty.md'])
         ->expectsOutputToContain('Documentation Entry: Empty Document')
@@ -128,7 +128,7 @@ it('returns specific error message for non-existent ID', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('findById')->with('invalid:nonexistent')->once()->andReturn(null);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextGetCommand::class, ['id' => 'invalid:nonexistent'])
         ->expectsOutputToContain("Documentation entry with ID 'invalid:nonexistent' not found.")

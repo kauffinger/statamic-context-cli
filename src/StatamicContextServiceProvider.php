@@ -28,10 +28,20 @@ class StatamicContextServiceProvider extends PackageServiceProvider
     {
         parent::register();
 
-        $this->app->bind(DocumentationRepository::class, fn ($app) => new FileDocumentationRepository(
+        // Main Statamic docs repository
+        $this->app->bind('docs.repository', fn ($app) => new FileDocumentationRepository(
             new Filesystem,
             config('statamic-context-cli.docs.index_file'),
         ));
+
+        // Peak docs repository
+        $this->app->bind('peak_docs.repository', fn ($app) => new FileDocumentationRepository(
+            new Filesystem,
+            config('statamic-context-cli.peak_docs.index_file'),
+        ));
+
+        // Default binding for backwards compatibility
+        $this->app->bind(DocumentationRepository::class, fn ($app) => $app->make('docs.repository'));
 
         $this->app->bind(DocumentationFetcher::class, fn ($app) => new DocumentationFetcher(
             new Client([
@@ -41,6 +51,23 @@ class StatamicContextServiceProvider extends PackageServiceProvider
             $app->make(DocumentationRepository::class),
             new Filesystem,
         ));
+
+        // Bind specific repository instances to command classes
+        $this->app->when(StatamicContextSearchCommand::class)
+            ->needs(DocumentationRepository::class)
+            ->give(fn ($app) => $app->make('docs.repository'));
+
+        $this->app->when(StatamicContextGetCommand::class)
+            ->needs(DocumentationRepository::class)
+            ->give(fn ($app) => $app->make('docs.repository'));
+
+        $this->app->when(StatamicPeakSearchCommand::class)
+            ->needs(DocumentationRepository::class)
+            ->give(fn ($app) => $app->make('peak_docs.repository'));
+
+        $this->app->when(StatamicPeakGetCommand::class)
+            ->needs(DocumentationRepository::class)
+            ->give(fn ($app) => $app->make('peak_docs.repository'));
     }
 
     public function configurePackage(Package $package): void

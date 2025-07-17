@@ -17,19 +17,24 @@ class StatamicContextGetCommand extends Command
 
     protected $description = 'Retrieve a specific documentation entry by ID';
 
-    public function handle(DocumentationRepository $repository): int
+    public function __construct(private DocumentationRepository $repository)
+    {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         try {
             $id = $this->argument('id');
             $format = $this->option('format');
 
-            if (! $repository->exists()) {
+            if (! $this->repository->exists()) {
                 $this->components->error('No documentation found. Run update-docs first.');
 
                 return self::FAILURE;
             }
 
-            $doc = $repository->findById($id);
+            $doc = $this->repository->findById($id);
 
             if (! $doc instanceof Documentation) {
                 $this->components->error("Documentation entry with ID '{$id}' not found.");

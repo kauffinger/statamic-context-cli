@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StatamicContext\StatamicContext\Repositories;
 
+use Fuse\Fuse;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
@@ -62,27 +63,98 @@ class FileDocumentationRepository implements DocumentationRepository
      */
     public function search(string $query): Collection
     {
+        $fuzzyEnabled = config('statamic-context-cli.search.fuzzy_enabled', true);
+        $threshold = config('statamic-context-cli.search.fuzzy_threshold', 0.3);
+
+        return $this->searchWithFuzzy($query, $fuzzyEnabled, $threshold);
+    }
+
+    /**
+     * @return Collection<int, Documentation>
+     */
+    public function searchWithFuzzy(string $query, bool $useFuzzy = true, float $threshold = 0.3): Collection
+    {
+        $allDocs = $this->loadIndex();
+
+        // Load content for all documents
+        $docsWithContent = $allDocs->map(function (Documentation $doc) {
+            if ($this->files->exists($doc->filePath)) {
+                $content = $this->files->get($doc->filePath);
+                $doc->content = $content;
+            }
+
+            return $doc;
+        });
+
+        if ($useFuzzy) {
+            return $this->fuzzySearch($docsWithContent, $query, $threshold);
+        }
+
+        // Fallback to exact search
+        return $this->exactSearch($docsWithContent, $query);
+    }
+
+    /**
+     * @param  Collection<int, Documentation>  $docs
+     * @return Collection<int, Documentation>
+     */
+    private function fuzzySearch(Collection $docs, string $query, float $threshold): Collection
+    {
+        $titleWeight = config('statamic-context-cli.search.title_weight', 0.7);
+        $contentWeight = config('statamic-context-cli.search.content_weight', 0.3);
+
+        // Convert documents to array format for Fuse
+        $fuseData = $docs->map(function (Documentation $doc) {
+            return [
+                'id' => $doc->getId(),
+                'title' => $doc->title,
+                'content' => $doc->getSearchableContent(),
+                'doc' => $doc,
+            ];
+        })->toArray();
+
+        // Configure Fuse options
+        $options = [
+            'keys' => [
+                [
+                    'name' => 'title',
+                    'weight' => $titleWeight,
+                ],
+                [
+                    'name' => 'content',
+                    'weight' => $contentWeight,
+                ],
+            ],
+            'threshold' => 1.0 - $threshold, // Fuse uses distance, we use similarity
+            'includeScore' => true,
+            'ignoreLocation' => true,
+            'findAllMatches' => true,
+        ];
+
+        $fuse = new Fuse($fuseData, $options);
+        $results = $fuse->search($query);
+
+        return collect($results)
+            ->map(fn ($result) => $result['item']['doc'])
+            ->take(50); // Limit results to avoid too many matches
+    }
+
+    /**
+     * @param  Collection<int, Documentation>  $docs
+     * @return Collection<int, Documentation>
+     */
+    private function exactSearch(Collection $docs, string $query): Collection
+    {
         $results = collect();
 
         // Search in titles first
-        $titleMatches = $this->loadIndex()
-            ->filter(fn (Documentation $doc) => $doc->matches($query));
-
+        $titleMatches = $docs->filter(fn (Documentation $doc) => $doc->matches($query));
         $results = $results->merge($titleMatches);
 
         // Then search in content
-        $contentMatches = $this->loadIndex()
+        $contentMatches = $docs
             ->reject(fn (Documentation $doc) => $titleMatches->contains($doc))
-            ->filter(function (Documentation $doc) use ($query) {
-                if ($this->files->exists($doc->filePath)) {
-                    $content = $this->files->get($doc->filePath);
-                    $doc->content = $content;
-
-                    return $doc->contentMatches($query);
-                }
-
-                return false;
-            });
+            ->filter(fn (Documentation $doc) => $doc->contentMatches($query));
 
         $results = $results->merge($contentMatches);
 

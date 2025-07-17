@@ -6,6 +6,21 @@ declare(strict_types=1);
 return [
     /*
     |--------------------------------------------------------------------------
+    | Search Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for search functionality including fuzzy search
+    |
+    */
+    'search' => [
+        'fuzzy_enabled' => true,
+        'fuzzy_threshold' => 0.3,
+        'title_weight' => 0.7,
+        'content_weight' => 0.3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Statamic Documentation Storage
     |--------------------------------------------------------------------------
     |

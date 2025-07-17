@@ -26,11 +26,16 @@ class StatamicContextSearchCommand extends Command
 
     protected $description = 'Search through Statamic documentation';
 
-    public function handle(DocumentationRepository $repository): int
+    public function __construct(private DocumentationRepository $repository)
+    {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         try {
             if ($this->option('interactive')) {
-                return $this->handleInteractive($repository);
+                return $this->handleInteractive($this->repository);
             }
 
             // Check if query was provided as argument
@@ -38,20 +43,20 @@ class StatamicContextSearchCommand extends Command
 
             if ($query) {
                 // Direct search with provided query
-                $this->searchDocumentation($query, $repository);
+                $this->searchDocumentation($query, $this->repository);
 
                 return self::SUCCESS;
             }
 
             // Show help and prompt for query if none provided
-            $this->displayHelp($repository);
+            $this->displayHelp($this->repository);
             $query = $this->promptForQuery();
 
             if ($query === '') {
                 return self::SUCCESS;
             }
 
-            $this->searchDocumentation($query, $repository);
+            $this->searchDocumentation($query, $this->repository);
 
             return self::SUCCESS;
         } catch (DocumentationException $e) {

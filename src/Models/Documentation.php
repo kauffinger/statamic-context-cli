@@ -83,4 +83,9 @@ class Documentation implements Arrayable, Jsonable
 
         return str_contains(strtolower($this->content), strtolower($query));
     }
+
+    public function getSearchableContent(): string
+    {
+        return $this->content ?? '';
+    }
 }

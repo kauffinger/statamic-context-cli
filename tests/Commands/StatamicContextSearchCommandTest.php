@@ -22,7 +22,7 @@ it('can search with query argument', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('search')->with('collections')->once()->andReturn(collect([$doc]));
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class, ['query' => 'collections'])
         ->expectsOutputToContain('Found 1 results')
@@ -35,7 +35,7 @@ it('shows help when no query provided', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('count')->once()->andReturn(100);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class)
         ->expectsQuestion('Enter your search query (or press Enter to exit):', '')
@@ -51,7 +51,7 @@ it('handles empty search results', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('search')->with('nonexistent')->once()->andReturn(collect([]));
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class, ['query' => 'nonexistent'])
         ->expectsOutputToContain('No results found.')
@@ -63,7 +63,7 @@ it('returns error when repository does not exist', function () {
     $repository = Mockery::mock(DocumentationRepository::class);
     $repository->shouldReceive('exists')->once()->andReturn(false);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class, ['query' => 'test'])
         ->assertExitCode(1);
@@ -95,7 +95,7 @@ it('displays multiple search results with limit', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('search')->with('guide')->once()->andReturn($docs);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class, ['query' => 'guide'])
         ->expectsOutputToContain('Found 2 results')
@@ -139,7 +139,7 @@ it('respects limit option', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('search')->with('document')->once()->andReturn($docs);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class, ['query' => 'document', '--limit' => '2'])
         ->expectsOutputToContain('Found 3 results (showing 2)')
@@ -154,7 +154,7 @@ it('shows documentation status when repository exists', function () {
     $repository->shouldReceive('exists')->once()->andReturn(true);
     $repository->shouldReceive('count')->once()->andReturn(150);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class)
         ->expectsQuestion('Enter your search query (or press Enter to exit):', '')
@@ -166,7 +166,7 @@ it('shows warning when repository does not exist during help', function () {
     $repository = Mockery::mock(DocumentationRepository::class);
     $repository->shouldReceive('exists')->once()->andReturn(false);
 
-    $this->app->instance(DocumentationRepository::class, $repository);
+    $this->app->instance('docs.repository', $repository);
 
     $this->artisan(StatamicContextSearchCommand::class)
         ->expectsQuestion('Enter your search query (or press Enter to exit):', '')

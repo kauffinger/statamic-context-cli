@@ -17,19 +17,24 @@ class StatamicPeakGetCommand extends Command
 
     protected $description = 'Retrieve a specific Peak documentation entry by ID';
 
-    public function handle(DocumentationRepository $repository): int
+    public function __construct(private DocumentationRepository $repository)
+    {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         try {
             $id = $this->argument('id');
             $format = $this->option('format');
 
-            if (! $repository->exists()) {
+            if (! $this->repository->exists()) {
                 $this->components->error('No Peak documentation found. Run statamic-context:peak:update first.');
 
                 return self::FAILURE;
             }
 
-            $doc = $repository->findById($id);
+            $doc = $this->repository->findById($id);
 
             if (! $doc instanceof Documentation) {
                 $this->components->error("Peak documentation entry with ID '{$id}' not found.");
