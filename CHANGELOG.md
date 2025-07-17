@@ -2,6 +2,12 @@
 
 All notable changes to `statamic-context-cli` will be documented in this file.
 
+## v0.0.6 - 2025-07-17
+
+* chore: fuzzy search
+
+**Full Changelog**: https://github.com/kauffinger/statamic-context-cli/compare/v0.0.5...v0.0.6
+
 ## v0.0.5 - 2025-07-17
 
 * feat: add all docs
