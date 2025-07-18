@@ -54,4 +54,9 @@ interface DocumentationRepository
      * Get the count of documentation items.
      */
     public function count(): int;
+
+    /**
+     * Rebuild index with content for better search performance.
+     */
+    public function rebuildIndexWithContent(): void;
 }

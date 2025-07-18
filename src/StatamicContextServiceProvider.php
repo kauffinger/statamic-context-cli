@@ -9,6 +9,7 @@ use Illuminate\Filesystem\Filesystem;
 use Override;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use StatamicContext\StatamicContext\Commands\RebuildIndexCommand;
 use StatamicContext\StatamicContext\Commands\StatamicContextCommand;
 use StatamicContext\StatamicContext\Commands\StatamicContextGetCommand;
 use StatamicContext\StatamicContext\Commands\StatamicContextSearchCommand;
@@ -68,6 +69,18 @@ class StatamicContextServiceProvider extends PackageServiceProvider
         $this->app->when(StatamicPeakGetCommand::class)
             ->needs(DocumentationRepository::class)
             ->give(fn ($app) => $app->make('peak_docs.repository'));
+
+        // Bind specific fetcher for UpdatePeakDocsCommand
+        $this->app->when(UpdatePeakDocsCommand::class)
+            ->needs(DocumentationFetcher::class)
+            ->give(fn ($app) => new DocumentationFetcher(
+                new Client([
+                    'base_uri' => 'https://api.github.com/',
+                    'timeout' => 30,
+                ]),
+                $app->make('peak_docs.repository'),
+                new Filesystem,
+            ));
     }
 
     public function configurePackage(Package $package): void
@@ -87,6 +100,7 @@ class StatamicContextServiceProvider extends PackageServiceProvider
             ->hasCommand(StatamicPeakCommand::class)
             ->hasCommand(StatamicPeakSearchCommand::class)
             ->hasCommand(StatamicPeakGetCommand::class)
-            ->hasCommand(UpdatePeakDocsCommand::class);
+            ->hasCommand(UpdatePeakDocsCommand::class)
+            ->hasCommand(RebuildIndexCommand::class);
     }
 }

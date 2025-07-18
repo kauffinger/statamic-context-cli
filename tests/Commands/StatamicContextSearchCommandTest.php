@@ -145,7 +145,7 @@ it('respects limit option', function () {
         ->expectsOutputToContain('Found 3 results (showing 2)')
         ->expectsOutputToContain('Document 1')
         ->expectsOutputToContain('Document 2')
-        ->expectsOutputToContain('Use --limit option to see more results')
+        ->expectsOutputToContain('Use --start=2 to see the next page')
         ->assertExitCode(0);
 });
 

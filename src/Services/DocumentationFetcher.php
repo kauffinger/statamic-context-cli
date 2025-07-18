@@ -6,11 +6,14 @@ namespace StatamicContext\StatamicContext\Services;
 
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
 use StatamicContext\StatamicContext\Models\Documentation;
+
+use function Laravel\Prompts\progress;
 
 class DocumentationFetcher
 {
@@ -25,22 +28,31 @@ class DocumentationFetcher
      *
      * @return array{total: int, updated: int, errors: int}
      */
-    public function fetchAll(string $configKey = 'docs'): array
+    public function fetchAll(string $configKey = 'docs', ?Command $command = null): array
     {
         $stats = ['total' => 0, 'updated' => 0, 'errors' => 0];
         $allDocumentation = collect();
 
         $collections = config("statamic-context-cli.{$configKey}.collections", []);
 
+        if ($command instanceof Command) {
+            $command->getOutput()->writeln("<info>📂 Scanning {$configKey} collections...</info>");
+        }
+
         foreach ($collections as $collection) {
-            $result = $this->fetchCollection($collection, $allDocumentation, $configKey);
+            $result = $this->fetchCollection($collection, $allDocumentation, $configKey, $command);
             $stats['total'] += $result['total'];
             $stats['updated'] += $result['updated'];
             $stats['errors'] += $result['errors'];
         }
 
-        // Save all documentation at once
-        $this->repository->saveMany($allDocumentation);
+        // Save all documentation at once with progress
+        if ($command && $allDocumentation->isNotEmpty()) {
+            $command->getOutput()->writeln("<info>💾 Building search index with {$allDocumentation->count()} documents...</info>");
+            $this->repository->saveMany($allDocumentation);
+        } else {
+            $this->repository->saveMany($allDocumentation);
+        }
 
         return $stats;
     }
@@ -51,24 +63,57 @@ class DocumentationFetcher
      * @param  Collection<int, Documentation>  $allDocumentation
      * @return array{total: int, updated: int, errors: int}
      */
-    private function fetchCollection(string $collection, Collection $allDocumentation, string $configKey = 'docs'): array
+    private function fetchCollection(string $collection, Collection $allDocumentation, string $configKey = 'docs', ?Command $command = null): array
     {
         $stats = ['total' => 0, 'updated' => 0, 'errors' => 0];
 
         try {
-            $files = $this->getCollectionFiles($collection, $configKey);
-            $stats['total'] = $files->count();
+            if ($command instanceof Command) {
+                $command->getOutput()->writeln("<info>📡 Fetching file list for {$collection}...</info>");
+            }
 
-            $files->filter(fn (array $file) => $file['type'] === 'file' && Str::endsWith($file['name'], '.md')
-            )->each(function (array $file) use ($collection, &$stats, $allDocumentation, $configKey) {
-                try {
-                    $documentation = $this->fetchAndProcessFile($collection, $file, $configKey);
-                    $allDocumentation->push($documentation);
-                    $stats['updated']++;
-                } catch (Exception) {
-                    $stats['errors']++;
-                }
-            });
+            $files = $this->getCollectionFiles($collection, $configKey);
+
+            $stats['total'] = $files->count();
+            $markdownFiles = $files->filter(fn (array $file) => $file['type'] === 'file' && Str::endsWith($file['name'], '.md'));
+
+            if ($markdownFiles->isEmpty()) {
+                return $stats;
+            }
+
+            if ($command instanceof Command) {
+                // Use progress bar for file downloads
+                $progressBar = progress(
+                    label: "📥 Downloading {$collection} files",
+                    steps: $markdownFiles->count()
+                );
+
+                $progressBar->start();
+
+                $markdownFiles->each(function (array $file) use ($collection, &$stats, $allDocumentation, $configKey, $progressBar) {
+                    try {
+                        $documentation = $this->fetchAndProcessFile($collection, $file, $configKey);
+                        $allDocumentation->push($documentation);
+                        $stats['updated']++;
+                        $progressBar->advance();
+                    } catch (Exception) {
+                        $stats['errors']++;
+                        $progressBar->advance();
+                    }
+                });
+
+                $progressBar->finish();
+            } else {
+                $markdownFiles->each(function (array $file) use ($collection, &$stats, $allDocumentation, $configKey) {
+                    try {
+                        $documentation = $this->fetchAndProcessFile($collection, $file, $configKey);
+                        $allDocumentation->push($documentation);
+                        $stats['updated']++;
+                    } catch (Exception) {
+                        $stats['errors']++;
+                    }
+                });
+            }
         } catch (Exception) {
             $stats['errors']++;
         }

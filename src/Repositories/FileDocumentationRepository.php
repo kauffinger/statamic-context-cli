@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace StatamicContext\StatamicContext\Repositories;
 
-use Fuse\Fuse;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use StatamicContext\StatamicContext\Contracts\DocumentationRepository;
@@ -47,15 +46,7 @@ class FileDocumentationRepository implements DocumentationRepository
 
         [$collection, $filename] = $parts;
 
-        $doc = $this->find($collection, $filename);
-
-        // Load content if found
-        if ($doc && $this->files->exists($doc->filePath)) {
-            $content = $this->files->get($doc->filePath);
-            $doc->content = $content;
-        }
-
-        return $doc;
+        return $this->find($collection, $filename);
     }
 
     /**
@@ -63,102 +54,94 @@ class FileDocumentationRepository implements DocumentationRepository
      */
     public function search(string $query): Collection
     {
-        $fuzzyEnabled = config('statamic-context-cli.search.fuzzy_enabled', true);
-        $threshold = config('statamic-context-cli.search.fuzzy_threshold', 0.3);
+        $docs = $this->loadIndex();
+        $queryLower = strtolower(trim($query));
 
-        return $this->searchWithFuzzy($query, $fuzzyEnabled, $threshold);
-    }
-
-    /**
-     * @return Collection<int, Documentation>
-     */
-    public function searchWithFuzzy(string $query, bool $useFuzzy = true, float $threshold = 0.3): Collection
-    {
-        $allDocs = $this->loadIndex();
-
-        // Load content for all documents
-        $docsWithContent = $allDocs->map(function (Documentation $doc) {
-            if ($this->files->exists($doc->filePath)) {
-                $content = $this->files->get($doc->filePath);
-                $doc->content = $content;
-            }
-
-            return $doc;
-        });
-
-        if ($useFuzzy) {
-            return $this->fuzzySearch($docsWithContent, $query, $threshold);
+        if ($queryLower === '' || $queryLower === '0') {
+            return new Collection;
         }
 
-        // Fallback to exact search
-        return $this->exactSearch($docsWithContent, $query);
-    }
+        $titleWeight = config('statamic-context-cli.search.title_weight', 3.0);
+        $contentWeight = config('statamic-context-cli.search.content_weight', 1.0);
 
-    /**
-     * @param  Collection<int, Documentation>  $docs
-     * @return Collection<int, Documentation>
-     */
-    private function fuzzySearch(Collection $docs, string $query, float $threshold): Collection
-    {
-        $titleWeight = config('statamic-context-cli.search.title_weight', 0.7);
-        $contentWeight = config('statamic-context-cli.search.content_weight', 0.3);
+        // Split query into words for multi-word search
+        $queryWords = preg_split('/\s+/', $queryLower);
+        $isMultiWord = count($queryWords) > 1;
 
-        // Convert documents to array format for Fuse
-        $fuseData = $docs->map(function (Documentation $doc) {
-            return [
-                'id' => $doc->getId(),
-                'title' => $doc->title,
-                'content' => $doc->getSearchableContent(),
-                'doc' => $doc,
-            ];
-        })->toArray();
+        // Score each document
+        $scored = $docs->map(function (Documentation $doc) use ($queryLower, $queryWords, $titleWeight, $contentWeight, $isMultiWord) {
+            $score = 0;
+            $titleLower = strtolower($doc->title);
+            $contentLower = $doc->content ? strtolower($doc->content) : '';
 
-        // Configure Fuse options
-        $options = [
-            'keys' => [
-                [
-                    'name' => 'title',
-                    'weight' => $titleWeight,
-                ],
-                [
-                    'name' => 'content',
-                    'weight' => $contentWeight,
-                ],
-            ],
-            'threshold' => 1.0 - $threshold, // Fuse uses distance, we use similarity
-            'includeScore' => true,
-            'ignoreLocation' => true,
-            'findAllMatches' => true,
-        ];
+            // For single word queries, use the original logic
+            if (! $isMultiWord) {
+                // Title matching (higher weight)
+                if (str_contains($titleLower, $queryLower)) {
+                    $score += $titleWeight;
+                    // Exact title match gets extra points
+                    if ($titleLower === $queryLower) {
+                        $score += $titleWeight * 2;
+                    }
+                    // Title starts with query gets bonus
+                    if (str_starts_with($titleLower, $queryLower)) {
+                        $score += $titleWeight;
+                    }
+                }
 
-        $fuse = new Fuse($fuseData, $options);
-        $results = $fuse->search($query);
+                // Content matching
+                if ($contentLower && str_contains($contentLower, $queryLower)) {
+                    $score += $contentWeight;
+                    // Multiple occurrences increase score
+                    $occurrences = substr_count($contentLower, $queryLower);
+                    $score += ($occurrences - 1) * ($contentWeight * 0.1);
+                }
+            } else {
+                // Multi-word search: score based on individual words
+                $titleWordsFound = 0;
+                $contentWordsFound = 0;
 
-        return collect($results)
-            ->map(fn ($result) => $result['item']['doc'])
-            ->take(50); // Limit results to avoid too many matches
-    }
+                foreach ($queryWords as $word) {
+                    // Title matching
+                    if (str_contains($titleLower, $word)) {
+                        $titleWordsFound++;
+                        $score += $titleWeight * 0.5; // Lower weight per word
+                    }
 
-    /**
-     * @param  Collection<int, Documentation>  $docs
-     * @return Collection<int, Documentation>
-     */
-    private function exactSearch(Collection $docs, string $query): Collection
-    {
-        $results = collect();
+                    // Content matching
+                    if ($contentLower && str_contains($contentLower, $word)) {
+                        $contentWordsFound++;
+                        $occurrences = substr_count($contentLower, $word);
+                        $score += $contentWeight * 0.3 * $occurrences;
+                    }
+                }
 
-        // Search in titles first
-        $titleMatches = $docs->filter(fn (Documentation $doc) => $doc->matches($query));
-        $results = $results->merge($titleMatches);
+                // Bonus for finding all words
+                if ($titleWordsFound === count($queryWords)) {
+                    $score += $titleWeight;
+                }
+                if ($contentWordsFound === count($queryWords)) {
+                    $score += $contentWeight;
+                }
 
-        // Then search in content
-        $contentMatches = $docs
-            ->reject(fn (Documentation $doc) => $titleMatches->contains($doc))
-            ->filter(fn (Documentation $doc) => $doc->contentMatches($query));
+                // Extra bonus if exact phrase is found
+                if (str_contains($titleLower, $queryLower)) {
+                    $score += $titleWeight * 1.5;
+                }
+                if ($contentLower && str_contains($contentLower, $queryLower)) {
+                    $score += $contentWeight * 1.5;
+                }
+            }
 
-        $results = $results->merge($contentMatches);
+            return ['doc' => $doc, 'score' => $score];
+        })
+            ->filter(fn ($item) => $item['score'] > 0)
+            ->sortByDesc('score')
+            ->take(50)
+            ->map(fn ($item) => $item['doc'])
+            ->values();
 
-        return $results->sortBy('title')->values();
+        return $scored;
     }
 
     public function save(Documentation $documentation, string $content): void
@@ -180,8 +163,20 @@ class FileDocumentationRepository implements DocumentationRepository
             $doc->filename === $documentation->filename
         );
 
+        // Create documentation with content if indexing is enabled
+        $indexContent = config('statamic-context-cli.search.index_content', true);
+        $docToIndex = $indexContent ? new Documentation(
+            collection: $documentation->collection,
+            filename: $documentation->filename,
+            title: $documentation->title,
+            filePath: $documentation->filePath,
+            githubUrl: $documentation->githubUrl,
+            lastUpdated: $documentation->lastUpdated,
+            content: $content
+        ) : $documentation;
+
         // Add new entry
-        $index->push($documentation);
+        $index->push($docToIndex);
 
         $this->saveIndex($index);
     }
@@ -191,8 +186,36 @@ class FileDocumentationRepository implements DocumentationRepository
      */
     public function saveMany(Collection $items): void
     {
-        $this->saveIndex($items);
-        $this->index = $items;
+        $indexContent = config('statamic-context-cli.search.index_content', true);
+
+        if ($indexContent) {
+            // Load content for all items before saving to index
+            $itemsWithContent = $items->map(function (Documentation $doc) {
+                if ($doc->content === null && $this->files->exists($doc->filePath)) {
+                    $content = $this->files->get($doc->filePath);
+
+                    return new Documentation(
+                        collection: $doc->collection,
+                        filename: $doc->filename,
+                        title: $doc->title,
+                        filePath: $doc->filePath,
+                        githubUrl: $doc->githubUrl,
+                        lastUpdated: $doc->lastUpdated,
+                        content: $content
+                    );
+                }
+
+                return $doc;
+            });
+
+            $this->saveIndex($itemsWithContent);
+            $this->index = $itemsWithContent;
+        } else {
+            $this->saveIndex($items);
+            $this->index = $items;
+        }
+
+        $this->clearInMemoryCache();
     }
 
     public function exists(): bool
@@ -243,5 +266,42 @@ class FileDocumentationRepository implements DocumentationRepository
         $this->files->put($this->indexPath, json_encode($data, JSON_PRETTY_PRINT));
 
         $this->index = $index;
+    }
+
+    private function clearInMemoryCache(): void
+    {
+        // Clear in-memory cache
+        $this->index = null;
+    }
+
+    /**
+     * Rebuild index with content for better search performance
+     */
+    public function rebuildIndexWithContent(): void
+    {
+        $index = $this->loadIndex();
+
+        // Load content for all documents and save back to index
+        $indexWithContent = $index->map(function (Documentation $doc) {
+            if ($doc->content === null && $this->files->exists($doc->filePath)) {
+                $content = $this->files->get($doc->filePath);
+
+                return new Documentation(
+                    collection: $doc->collection,
+                    filename: $doc->filename,
+                    title: $doc->title,
+                    filePath: $doc->filePath,
+                    githubUrl: $doc->githubUrl,
+                    lastUpdated: $doc->lastUpdated,
+                    content: $content
+                );
+            }
+
+            return $doc;
+        });
+
+        $this->saveIndex($indexWithContent);
+        $this->index = $indexWithContent;
+        $this->clearInMemoryCache();
     }
 }

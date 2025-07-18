@@ -18,7 +18,7 @@ it('successfully updates documentation', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Fetching Statamic documentation from GitHub...')
+        ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
         ->expectsOutputToContain('Documentation update completed')
         ->expectsOutputToContain('Total files processed')
         ->expectsOutputToContain('Files updated')
@@ -54,7 +54,7 @@ it('handles update failures gracefully', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Fetching Statamic documentation from GitHub...')
+        ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
         ->expectsOutputToContain('Failed to update documentation: GitHub API rate limit exceeded')
         ->assertExitCode(1);
 });

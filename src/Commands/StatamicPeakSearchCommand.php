@@ -22,11 +22,12 @@ class StatamicPeakSearchCommand extends Command
     protected $signature = 'statamic-context:peak:search
                             {query? : Search query term (e.g. page-builder, seo, tooling)}
                             {--limit=10 : Maximum number of results to display}
+                            {--start=0 : Starting position for pagination}
                             {--interactive : Use interactive prompts}';
 
     protected $description = 'Search through Statamic Peak documentation';
 
-    public function __construct(private DocumentationRepository $repository)
+    public function __construct(private readonly DocumentationRepository $repository)
     {
         parent::__construct();
     }
@@ -136,13 +137,14 @@ class StatamicPeakSearchCommand extends Command
         $this->newLine();
         $this->components->twoColumnDetail('<fg=gray>Usage</>', 'php artisan statamic-context:peak:search [query]');
         $this->components->twoColumnDetail('<fg=gray>Interactive</>', 'php artisan statamic-context:peak:search --interactive');
+        $this->components->twoColumnDetail('<fg=gray>Pagination</>', 'php artisan statamic-context:peak:search [query] --start=10 --limit=10');
         $this->components->twoColumnDetail('<fg=gray>Update docs</>', 'php artisan statamic-context:peak:update');
 
         $this->newLine();
         $this->line('<fg=yellow>Examples:</>');
         $this->line('  php artisan statamic-context:peak:search page-builder');
-        $this->line('  php artisan statamic-context:peak:search seo');
-        $this->line('  php artisan statamic-context:peak:search tooling');
+        $this->line('  php artisan statamic-context:peak:search seo --limit=20');
+        $this->line('  php artisan statamic-context:peak:search "browser appearance" --start=10');
 
         $this->newLine();
         $this->displayStatus($repository);
@@ -189,14 +191,23 @@ class StatamicPeakSearchCommand extends Command
     private function displayResults(Collection $results, string $query = '', ?int $customLimit = null): void
     {
         $limit = $customLimit ?? (int) $this->option('limit');
+        $start = (int) $this->option('start');
         $total = $results->count();
-        $showing = min($limit, $total);
+
+        // Apply pagination
+        $paginatedResults = $results->slice($start, $limit);
+        $showing = $paginatedResults->count();
+        $end = min($start + $limit, $total);
 
         $this->newLine();
-        $this->components->info("Found {$total} results".($total > $limit ? " (showing {$showing})" : ''));
+        if ($start > 0) {
+            $this->components->info("Found {$total} results (showing {$start}-".($end - 1).')');
+        } else {
+            $this->components->info("Found {$total} results".($total > $limit ? " (showing {$showing})" : ''));
+        }
         $this->newLine();
 
-        $results->take($limit)->each(function ($doc) use ($query) {
+        $paginatedResults->each(function ($doc) use ($query) {
             $this->components->twoColumnDetail(
                 "<fg=cyan>{$doc->title}</>",
                 "<fg=gray>{$doc->collection}</>"
@@ -218,8 +229,10 @@ class StatamicPeakSearchCommand extends Command
             $this->newLine();
         });
 
-        if ($total > $limit) {
-            $this->components->info('Use --limit option to see more results');
+        // Show pagination info
+        if ($total > $end) {
+            $nextStart = $start + $limit;
+            $this->components->info("Use --start={$nextStart} to see the next page");
 
             if ($this->option('interactive')) {
                 $showMore = confirm('Would you like to see more results?');
@@ -316,20 +329,70 @@ class StatamicPeakSearchCommand extends Command
 
     private function getSnippet(string $content, string $query): ?string
     {
-        $lines = collect(explode("\n", $content));
+        // Remove frontmatter, special characters, and clean up content
+        $cleanContent = $this->cleanContentForSnippet($content);
+        $lines = collect(explode("\n", $cleanContent));
         $queryLower = strtolower($query);
 
-        // Find line containing the query
-        $matchingLine = $lines->first(fn ($line) => str_contains(strtolower($line), $queryLower));
+        // For multi-word queries, try to find lines with any of the words
+        $queryWords = preg_split('/\s+/', $queryLower);
+        $matchingLines = collect();
 
-        if ($matchingLine) {
-            return Str::limit(trim($matchingLine), 80);
+        // Find lines containing query words
+        $lines->each(function ($line) use ($queryWords, $queryLower, &$matchingLines) {
+            $lineLower = strtolower($line);
+            // Prioritize exact phrase matches
+            if ($queryLower && str_contains($lineLower, $queryLower)) {
+                $matchingLines->prepend($line);
+            } elseif (count($queryWords) > 1) {
+                // For multi-word queries, check if line contains any word
+                foreach ($queryWords as $word) {
+                    if (str_contains($lineLower, $word)) {
+                        $matchingLines->push($line);
+                        break;
+                    }
+                }
+            }
+        });
+
+        if ($matchingLines->isNotEmpty()) {
+            $snippet = trim($matchingLines->first());
+
+            return Str::limit($snippet, 200, '...');
         }
 
         // Return first meaningful line if no direct match
-        return $lines
+        $firstMeaningful = $lines
             ->map(fn ($line) => trim($line))
-            ->filter(fn ($line) => $line !== '' && ! str_starts_with($line, '#'))
+            ->filter(fn ($line) => strlen($line) > 20) // Skip very short lines
             ->first();
+
+        return $firstMeaningful ? Str::limit($firstMeaningful, 200, '...') : null;
+    }
+
+    private function cleanContentForSnippet(string $content): string
+    {
+        // Remove YAML frontmatter
+        $content = preg_replace('/^---[\s\S]*?---\s*/m', '', $content);
+
+        // Remove markdown headers (but keep the text)
+        $content = preg_replace('/^#+\s*/m', '', (string) $content);
+
+        // Remove markdown links but keep text
+        $content = preg_replace('/\[([^\]]+)\]\([^\)]+\)/', '$1', (string) $content);
+
+        // Remove code fences
+        $content = preg_replace('/```[\s\S]*?```/', '', (string) $content);
+        $content = preg_replace('/`([^`]+)`/', '$1', (string) $content);
+
+        // Remove HTML tags
+        $content = strip_tags((string) $content);
+
+        // Clean up special characters and excessive whitespace
+        $content = preg_replace('/[*_~\[\](){}#]/', '', $content);
+        $content = preg_replace('/\s+/', ' ', (string) $content);
+        $content = preg_replace('/\n{3,}/', "\n\n", (string) $content);
+
+        return trim((string) $content);
     }
 }

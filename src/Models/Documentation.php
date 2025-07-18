@@ -55,6 +55,7 @@ class Documentation implements Arrayable, Jsonable
             'file_path' => $this->filePath,
             'github_url' => $this->githubUrl,
             'last_updated' => $this->lastUpdated->toIso8601String(),
+            'content' => $this->content,
         ];
     }
 

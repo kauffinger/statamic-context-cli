@@ -28,8 +28,11 @@ The goal of this package is to create a CLI tool that enables Claude Code to sea
 - `php artisan vendor:publish --tag="statamic-context-cli-migrations"` - Publish migrations
 - `php artisan vendor:publish --tag="statamic-context-cli-views"` - Publish views
 
-### Main Command
+### Main Commands
 - `php artisan statamic-context-cli` - Run the main package command
+- `php artisan statamic-context:docs:search` - Search Statamic documentation
+- `php artisan statamic-context:docs:update` - Update documentation from GitHub
+- `php artisan statamic-context:docs:rebuild-index` - Rebuild search index for better performance
 
 ## Architecture
 

@@ -13,10 +13,9 @@ return [
     |
     */
     'search' => [
-        'fuzzy_enabled' => true,
-        'fuzzy_threshold' => 0.3,
-        'title_weight' => 0.7,
-        'content_weight' => 0.3,
+        'title_weight' => 3.0,    // Higher weight for title matches
+        'content_weight' => 1.0,  // Base weight for content matches
+        'index_content' => true,  // Store content in index for fastest searches
     ],
 
     /*

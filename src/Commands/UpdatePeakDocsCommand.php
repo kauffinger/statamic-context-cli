@@ -17,31 +17,32 @@ class UpdatePeakDocsCommand extends Command
 
     public function handle(DocumentationFetcher $fetcher): int
     {
-        $this->components->info('Fetching Statamic Peak documentation from GitHub...');
+        $this->components->info('🚀 Updating Statamic Peak documentation from GitHub...');
 
         try {
             $startTime = microtime(true);
 
-            $stats = $fetcher->fetchAll('peak_docs');
+            // Pass the command instance to fetcher for progress updates
+            $stats = $fetcher->fetchAll('peak_docs', $this);
 
             $duration = round(microtime(true) - $startTime, 2);
 
             $this->newLine();
-            $this->components->success("Peak documentation update completed in {$duration} seconds!");
+            $this->components->success("✅ Peak documentation update completed in {$duration} seconds!");
 
-            $this->components->twoColumnDetail('Total files processed', (string) $stats['total']);
-            $this->components->twoColumnDetail('Files updated', (string) $stats['updated']);
+            $this->components->twoColumnDetail('📁 Total files processed', (string) $stats['total']);
+            $this->components->twoColumnDetail('📝 Files updated', (string) $stats['updated']);
 
             if ($stats['errors'] > 0) {
                 $this->components->twoColumnDetail(
-                    '<fg=yellow>Errors encountered</>',
+                    '<fg=yellow>⚠️  Errors encountered</>',
                     "<fg=yellow>{$stats['errors']}</>"
                 );
             }
 
             return self::SUCCESS;
         } catch (Exception $e) {
-            $this->components->error('Failed to update Peak documentation: '.$e->getMessage());
+            $this->components->error('❌ Failed to update Peak documentation: '.$e->getMessage());
 
             if ($this->option('verbose')) {
                 $this->line($e->getTraceAsString());

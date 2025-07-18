@@ -17,7 +17,7 @@ class StatamicContextGetCommand extends Command
 
     protected $description = 'Retrieve a specific documentation entry by ID';
 
-    public function __construct(private DocumentationRepository $repository)
+    public function __construct(private readonly DocumentationRepository $repository)
     {
         parent::__construct();
     }
