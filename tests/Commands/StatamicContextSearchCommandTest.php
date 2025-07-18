@@ -170,6 +170,6 @@ it('shows warning when repository does not exist during help', function () {
 
     $this->artisan(StatamicContextSearchCommand::class)
         ->expectsQuestion('Enter your search query (or press Enter to exit):', '')
-        ->expectsOutputToContain('No documentation found. Run statamic-context:docs:update first.')
+        ->expectsOutputToContain('No Statamic documentation found. Run statamic-context:docs:update first.')
         ->assertExitCode(0);
 });

@@ -19,7 +19,7 @@ it('successfully updates documentation', function () {
 
     $this->artisan(UpdateDocsCommand::class)
         ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
-        ->expectsOutputToContain('Documentation update completed')
+        ->expectsOutputToContain('Statamic documentation update completed')
         ->expectsOutputToContain('Total files processed')
         ->expectsOutputToContain('Files updated')
         ->assertExitCode(0);
@@ -38,7 +38,7 @@ it('shows errors in update statistics', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Documentation update completed')
+        ->expectsOutputToContain('Statamic documentation update completed')
         ->expectsOutputToContain('Total files processed')
         ->expectsOutputToContain('Files updated')
         ->expectsOutputToContain('Errors encountered')
@@ -55,7 +55,7 @@ it('handles update failures gracefully', function () {
 
     $this->artisan(UpdateDocsCommand::class)
         ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
-        ->expectsOutputToContain('Failed to update documentation: GitHub API rate limit exceeded')
+        ->expectsOutputToContain('Failed to update Statamic documentation: GitHub API rate limit exceeded')
         ->assertExitCode(1);
 });
 
@@ -68,7 +68,7 @@ it('shows exception trace in verbose mode', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class, ['--verbose' => true])
-        ->expectsOutputToContain('Failed to update documentation: Network error')
+        ->expectsOutputToContain('Failed to update Statamic documentation: Network error')
         ->assertExitCode(1);
 });
 
@@ -85,7 +85,7 @@ it('supports force option', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class, ['--force' => true])
-        ->expectsOutputToContain('Documentation update completed')
+        ->expectsOutputToContain('Statamic documentation update completed')
         ->expectsOutputToContain('200')
         ->assertExitCode(0);
 });
@@ -120,7 +120,7 @@ it('handles zero updates gracefully', function () {
     $this->app->instance(DocumentationFetcher::class, $fetcher);
 
     $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Documentation update completed')
+        ->expectsOutputToContain('Statamic documentation update completed')
         ->expectsOutputToContain('Total files processed')
         ->expectsOutputToContain('Files updated')
         ->assertExitCode(0);
