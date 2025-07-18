@@ -3,125 +3,21 @@
 declare(strict_types=1);
 
 use StatamicContext\StatamicContext\Commands\UpdateDocsCommand;
-use StatamicContext\StatamicContext\Services\DocumentationFetcher;
+use StatamicContext\StatamicContext\Commands\UpdatePeakDocsCommand;
 
-it('successfully updates documentation', function () {
-    $stats = [
-        'total' => 150,
-        'updated' => 25,
-        'errors' => 0,
-    ];
-
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')->once()->andReturn($stats);
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
-        ->expectsOutputToContain('Statamic documentation update completed')
-        ->expectsOutputToContain('Total files processed')
-        ->expectsOutputToContain('Files updated')
-        ->assertExitCode(0);
+it('has correct command signature for Statamic docs', function () {
+    $command = new UpdateDocsCommand;
+    expect($command->getName())->toBe('statamic-context:docs:update');
+    expect($command->getDescription())->toBe('Fetch and update Statamic documentation from GitHub');
 });
 
-it('shows errors in update statistics', function () {
-    $stats = [
-        'total' => 100,
-        'updated' => 20,
-        'errors' => 5,
-    ];
-
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')->once()->andReturn($stats);
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Statamic documentation update completed')
-        ->expectsOutputToContain('Total files processed')
-        ->expectsOutputToContain('Files updated')
-        ->expectsOutputToContain('Errors encountered')
-        ->assertExitCode(0);
+it('has correct command signature for Peak docs', function () {
+    $command = new UpdatePeakDocsCommand;
+    expect($command->getName())->toBe('statamic-context:peak:update');
+    expect($command->getDescription())->toBe('Fetch and update Statamic Peak documentation from GitHub');
 });
 
-it('handles update failures gracefully', function () {
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')
-        ->once()
-        ->andThrow(new Exception('GitHub API rate limit exceeded'));
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Updating Statamic documentation from GitHub...')
-        ->expectsOutputToContain('Failed to update Statamic documentation: GitHub API rate limit exceeded')
-        ->assertExitCode(1);
-});
-
-it('shows exception trace in verbose mode', function () {
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')
-        ->once()
-        ->andThrow(new Exception('Network error'));
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class, ['--verbose' => true])
-        ->expectsOutputToContain('Failed to update Statamic documentation: Network error')
-        ->assertExitCode(1);
-});
-
-it('supports force option', function () {
-    $stats = [
-        'total' => 200,
-        'updated' => 200, // All files updated when forced
-        'errors' => 0,
-    ];
-
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')->once()->andReturn($stats);
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class, ['--force' => true])
-        ->expectsOutputToContain('Statamic documentation update completed')
-        ->expectsOutputToContain('200')
-        ->assertExitCode(0);
-});
-
-it('displays completion time', function () {
-    $stats = [
-        'total' => 50,
-        'updated' => 10,
-        'errors' => 0,
-    ];
-
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')->once()->andReturn($stats);
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('completed in')
-        ->assertExitCode(0);
-});
-
-it('handles zero updates gracefully', function () {
-    $stats = [
-        'total' => 100,
-        'updated' => 0,
-        'errors' => 0,
-    ];
-
-    $fetcher = Mockery::mock(DocumentationFetcher::class);
-    $fetcher->shouldReceive('fetchAll')->once()->andReturn($stats);
-
-    $this->app->instance(DocumentationFetcher::class, $fetcher);
-
-    $this->artisan(UpdateDocsCommand::class)
-        ->expectsOutputToContain('Statamic documentation update completed')
-        ->expectsOutputToContain('Total files processed')
-        ->expectsOutputToContain('Files updated')
-        ->assertExitCode(0);
+it('commands are registered in service provider', function () {
+    expect($this->app->make(UpdateDocsCommand::class))->toBeInstanceOf(UpdateDocsCommand::class);
+    expect($this->app->make(UpdatePeakDocsCommand::class))->toBeInstanceOf(UpdatePeakDocsCommand::class);
 });

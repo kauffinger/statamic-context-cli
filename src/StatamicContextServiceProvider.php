@@ -69,18 +69,6 @@ class StatamicContextServiceProvider extends PackageServiceProvider
         $this->app->when(StatamicPeakGetCommand::class)
             ->needs(DocumentationRepository::class)
             ->give(fn ($app) => $app->make('peak_docs.repository'));
-
-        // Bind specific fetcher for UpdatePeakDocsCommand
-        $this->app->when(UpdatePeakDocsCommand::class)
-            ->needs(DocumentationFetcher::class)
-            ->give(fn ($app) => new DocumentationFetcher(
-                new Client([
-                    'base_uri' => 'https://api.github.com/',
-                    'timeout' => 30,
-                ]),
-                $app->make('peak_docs.repository'),
-                new Filesystem,
-            ));
     }
 
     public function configurePackage(Package $package): void
